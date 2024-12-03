@@ -67,3 +67,48 @@ exports.getBooksByIds = async (req, res) => {
         res.status(500).json({ message: 'Erro ao buscar livros por IDs', error: error.message });
     }
 };
+
+exports.searchBooks = async (req, res) => {
+    const { query } = req.body;
+    console.log('Parâmetro de busca recebido:', query);  // Verifique o valor do query
+
+    // Verificar se a query não foi fornecida
+    if (!query) {
+        return res.status(400).json({ success: false, message: 'Termo de pesquisa não fornecido.' });
+    }
+
+    try {
+        console.log('Buscando livros no banco de dados...');
+        
+        // Use regex para permitir correspondência parcial
+        const books = await Book.find({
+            $or: [
+                { title: { $regex: query, $options: 'i' } },
+                { description: { $regex: query, $options: 'i' } }
+            ]
+        });
+
+        // Se não encontrar livros, retorna um array vazio
+        if (books.length === 0) {
+            console.log('Nenhum livro encontrado.');
+            return res.json({ success: true, books: [] });
+        }
+
+        console.log('Livros encontrados:', books);
+        res.json({ success: true, books });
+    } catch (error) {
+        // Log do erro completo
+        console.error('Erro ao buscar livros no banco:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erro ao buscar livro',
+            error: error.message
+        });
+    }
+};
+
+
+
+
+
+
